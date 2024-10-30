@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  localstack:
+    image: localstack/localstack-pro # Use the LocalStack Pro image
+    container_name: localstack_main
+    ports:
+      - "4566:4566" # LocalStack edge port
+      - "4571:4571" # LocalStack S3 port (if using S3)
+      - "8055:8080" # LocalStack dashboard port
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?} # Set the auth token from the environment
+      - DEBUG=1 # Enable debug logging
+      - PERSISTENCE=1 # Enable persistence for data
+      - DATA_DIR=/var/lib/localstack/data # Optional: specify a custom data directory
+    volumes:
+      - "./localstack_data:/var/lib/localstack" # Mounts the local directory to persist data
+      - "/var/run/docker.sock:/var/run/docker.sock" # Mounts the Docker socket for Docker-in-Docker support
