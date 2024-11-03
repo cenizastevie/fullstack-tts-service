@@ -1,35 +1,34 @@
-version: "3.8"
+version: '3.8'
 
 services:
   localstack:
-    image: localstack/localstack-pro # Use the LocalStack Pro image
-    container_name: localstack_main
+    image: localstack/localstack
     ports:
-      - "4566:4566" # LocalStack edge port
-      - "4571:4571" # LocalStack S3 port (if using S3)
-      - "8055:8080" # LocalStack dashboard port
+      - "4566:4566"
+      - "4571:4571"
     environment:
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?} # Set the auth token from the environment
-      - DEBUG=1 # Enable debug logging
-      - PERSISTENCE=1 # Enable persistence for data
-      - DATA_DIR=/var/lib/localstack/data # Optional: specify a custom data directory
+      - SERVICES=s3,sqs
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack/data
     volumes:
-      - "./localstack_data:/var/lib/localstack" # Mounts the local directory to persist data
-      - "/var/run/docker.sock:/var/run/docker.sock" # Mounts the Docker socket for Docker-in-Docker support
+      - "./localstack_data:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
   fastapi:
     build:
-      context: ../backend/app  # Set context to the FastAPI app folder
-      dockerfile: Dockerfile   # Use Dockerfile in the fastapi-app folder
+      context: ../backend/app
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     networks:
       - my_network
     depends_on:
-      - localstack            # Ensures LocalStack starts before FastAPI
+      - localstack
     environment:
-      - LOCALSTACK_HOSTNAME=localstack  # Allows FastAPI to reference LocalStack by name
-      - LOCALSTACK_PORT=4566           # LocalStack port
+      - LOCALSTACK_HOSTNAME=localstack
+      - LOCALSTACK_PORT=4566
+    volumes:
+      - ../backend/app:/app  # Mount the FastAPI app directory to the container
 
 networks:
   my_network:
