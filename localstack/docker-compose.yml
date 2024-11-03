@@ -16,3 +16,21 @@ services:
     volumes:
       - "./localstack_data:/var/lib/localstack" # Mounts the local directory to persist data
       - "/var/run/docker.sock:/var/run/docker.sock" # Mounts the Docker socket for Docker-in-Docker support
+
+  fastapi:
+    build:
+      context: ../backend/app  # Set context to the FastAPI app folder
+      dockerfile: Dockerfile   # Use Dockerfile in the fastapi-app folder
+    ports:
+      - "8000:8000"
+    networks:
+      - my_network
+    depends_on:
+      - localstack            # Ensures LocalStack starts before FastAPI
+    environment:
+      - LOCALSTACK_HOSTNAME=localstack  # Allows FastAPI to reference LocalStack by name
+      - LOCALSTACK_PORT=4566           # LocalStack port
+
+networks:
+  my_network:
+    driver: bridge
