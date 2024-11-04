@@ -29,7 +29,16 @@ services:
       - LOCALSTACK_PORT=4566
     volumes:
       - ../backend/app:/app  # Mount the FastAPI app directory to the container
-
+  test:
+    build:
+      context: ../backend/app
+      dockerfile: Dockerfile
+    volumes:
+      - ../backend:/app  # Mount the backend directory to the container
+    command: ["pytest", "--disable-warnings"]
+    environment:
+      - LOCALSTACK_HOSTNAME=localstack
+      - LOCALSTACK_PORT=4566
 networks:
   my_network:
     driver: bridge

@@ -2,3 +2,6 @@ fastapi==0.100.0
 uvicorn==0.22.0
 gTTS==2.3.2
 watchdog
+pytest
+httpx
+boto3
