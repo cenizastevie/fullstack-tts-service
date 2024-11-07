@@ -21,6 +21,9 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copy the FastAPI app code into the container
 COPY . .
 
+# Set the PYTHONPATH environment variable
+ENV PYTHONPATH=/app
+
 # Expose the port FastAPI will run on
 EXPOSE 8000
 

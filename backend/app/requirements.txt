@@ -1,7 +1,9 @@
 fastapi==0.100.0
 uvicorn==0.22.0
 gTTS==2.3.2
+pydantic-settings
 watchdog
 pytest
 httpx
 boto3
+urllib3<2.0

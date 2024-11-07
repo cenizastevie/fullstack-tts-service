@@ -29,6 +29,7 @@ services:
       - LOCALSTACK_PORT=4566
     volumes:
       - ../backend/app:/app  # Mount the FastAPI app directory to the container
+
   test:
     build:
       context: ../backend/app
@@ -39,6 +40,10 @@ services:
     environment:
       - LOCALSTACK_HOSTNAME=localstack
       - LOCALSTACK_PORT=4566
+      - PYTHONPATH=/app  # Add PYTHONPATH to the environment
+    env_file:
+      - ../backend/app/.env  # Mount the .env file
+
 networks:
   my_network:
     driver: bridge

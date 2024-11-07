@@ -1,4 +1,8 @@
 from fastapi.testclient import TestClient
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
+
 from app.main import app
 
 client = TestClient(app)
@@ -13,6 +17,7 @@ def test_get_presigned_url():
     response = client.post("/v1/audio-service/presigned-url", json={"filename": "test_audio.mp3"})
     assert response.status_code == 200
     json_response = response.json()
+    print(json_response)
     assert "url" in json_response
     assert "fields" in json_response
 
