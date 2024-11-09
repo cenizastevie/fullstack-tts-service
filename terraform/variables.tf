@@ -16,20 +16,8 @@ variable "s3_endpoint" {
   default     = "http://localhost:4566"
 }
 
-variable "skip_credentials_validation" {
+variable "dev_mode" {
   description = "Skip AWS credentials validation"
-  type        = bool
-  default     = true
-}
-
-variable "skip_metadata_api_check" {
-  description = "Skip metadata API check"
-  type        = bool
-  default     = true
-}
-
-variable "skip_requesting_account_id" {
-  description = "Skip id check"
   type        = bool
   default     = true
 }

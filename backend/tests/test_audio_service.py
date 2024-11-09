@@ -41,19 +41,18 @@ def test_upload_file_to_presigned_url():
     response = client.post("/v1/audio-service/presigned-url", json={"filename": "test_audio.mp3"})
     assert response.status_code == 200
     presigned_url_data = response.json()
-
+    print(presigned_url_data)
     # Step 2: Upload the file using the presigned URL
-    files = {'file': open('test_files/test_audio.mp3', 'rb')}
+    file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test_audio.mp3')
+    files = {'file': open(file_path, 'rb')}
     response = requests.post(presigned_url_data['url'], data=presigned_url_data['fields'], files=files)
-
+    # print(response.json())
     # Check if the file upload was successful
     assert response.status_code == 204
-
+    
     # Step 3: Verify the file is in the S3 bucket
     s3_client = boto3.client(
         "s3",
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
         endpoint_url=f"http://{os.getenv('LOCALSTACK_HOSTNAME')}:{os.getenv('LOCALSTACK_PORT')}"
     )
     response = s3_client.list_objects_v2(Bucket=settings.audio_bucket)

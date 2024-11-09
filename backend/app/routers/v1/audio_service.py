@@ -15,7 +15,9 @@ def audio_service():
 
 @router.post("/audio-service/presigned-url")
 def get_presigned_url(request: PresignedUrlRequest):
-    s3_client = boto3.client("s3")
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint)
     try:
         response = s3_client.generate_presigned_post(
             Bucket=settings.audio_bucket,

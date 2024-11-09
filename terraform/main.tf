@@ -2,10 +2,10 @@ provider "aws" {
   region                      = "us-east-1"
   access_key                  = "test" # LocalStack default access key
   secret_key                  = "test" # LocalStack default secret key
-  skip_credentials_validation = var.skip_credentials_validation
-  skip_metadata_api_check     = var.skip_credentials_validation
-  skip_requesting_account_id  = var.skip_credentials_validation
-  s3_use_path_style           = var.skip_credentials_validation
+  skip_credentials_validation = var.dev_mode
+  skip_metadata_api_check     = var.dev_mode
+  skip_requesting_account_id  = var.dev_mode
+  s3_use_path_style           = var.dev_mode
 
   endpoints {
     s3 = var.s3_endpoint # LocalStack S3 endpoint, usually "http://localhost:4566"
