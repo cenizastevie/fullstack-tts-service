@@ -6,7 +6,16 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
+    @property
+    def audio_bucket(self):
+        return f"tts-service-{self.environment}-audio"
+
+    @property
+    def pdf_bucket(self):
+        return f"tts-service-{self.environment}-pdf"
+
+    @property
+    def text_bucket(self):
+        return f"tts-service-{self.environment}-text"
+
 settings = Settings()
-audio_bucket = f"tts-service-{settings.environment}-audio"
-pdf_bucket = f"tts-service-{settings.environment}-pdf"
-text_bucket = f"tts-service-{settings.environment}-text"

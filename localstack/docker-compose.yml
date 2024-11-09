@@ -27,22 +27,28 @@ services:
     environment:
       - LOCALSTACK_HOSTNAME=localstack
       - LOCALSTACK_PORT=4566
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
     volumes:
-      - ../backend/app:/app  # Mount the FastAPI app directory to the container
+      - ../backend/app:/app
 
   test:
     build:
       context: ../backend/app
       dockerfile: Dockerfile
     volumes:
-      - ../backend:/app  # Mount the backend directory to the container
+      - ../backend:/app
     command: ["pytest", "--disable-warnings"]
     environment:
       - LOCALSTACK_HOSTNAME=localstack
       - LOCALSTACK_PORT=4566
-      - PYTHONPATH=/app  # Add PYTHONPATH to the environment
+      - PYTHONPATH=/app
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
     env_file:
-      - ../backend/app/.env  # Mount the .env file
+      - ../backend/app/.env
 
 networks:
   my_network:
