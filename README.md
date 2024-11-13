@@ -38,3 +38,14 @@ terraform apply -var-file="dev.tfvars"
 ```
 docker-compose run test
 ```
+### Change directory first to use terraform ex:
+```bash
+cd terraform/dev
+```
+
+### Terraform commands
+```bash
+terraform init
+terraform plan
+terraform destroy
+```

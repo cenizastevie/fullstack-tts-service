@@ -5,7 +5,7 @@ services:
       - "4566:4566"
       - "4571:4571"
     environment:
-      - SERVICES=s3,sqs
+      - SERVICES=s3,sqs,sts
       - DEBUG=1
       - DATA_DIR=/var/lib/localstack/data
     volumes:
