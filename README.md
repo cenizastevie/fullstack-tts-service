@@ -47,5 +47,14 @@ cd terraform/dev
 ```bash
 terraform init
 terraform plan
+terraform apply
 terraform destroy
+```
+
+### Terraform commands staging
+```bash
+terraform init -var-file="staging.tfvars"
+terraform plan -var-file="staging.tfvars"
+terraform apply -var-file="staging.tfvars"
+terraform destroy -var-file="staging.tfvars"
 ```

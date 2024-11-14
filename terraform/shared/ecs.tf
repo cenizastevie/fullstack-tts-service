@@ -31,7 +31,7 @@ resource "aws_ecs_service" "fastapi" {
   desired_count   = 1
   launch_type     = "FARGATE"
   network_configuration {
-    subnets         = [aws_subnet.main.id]
+    subnets         = [aws_subnet.main_a.id, aws_subnet.main_b.id]  # Reference two subnets
     security_groups = [aws_security_group.ecs.id]
   }
 }
