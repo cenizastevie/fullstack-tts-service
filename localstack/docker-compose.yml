@@ -1,11 +1,12 @@
 services:
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack-pro
     ports:
       - "4566:4566"
       - "4571:4571"
     environment:
-      - SERVICES=s3,sqs,sts
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:?}
+      - SERVICES=s3,sqs,sts,iam,ec2,ecs,apigatewayv2,elbv2,rds
       - DEBUG=1
       - DATA_DIR=/var/lib/localstack/data
     volumes:
