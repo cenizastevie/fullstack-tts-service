@@ -46,3 +46,4 @@ terraform.rc
 .terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
+backend/app/alembic/script.py.mako

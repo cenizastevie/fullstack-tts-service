@@ -7,3 +7,9 @@ pytest
 httpx
 boto3
 urllib3<2.0
+numpy
+Pillow
+SQLAlchemy
+PyMySQL
+alembic
+cryptography

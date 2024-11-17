@@ -64,3 +64,12 @@ terraform plan -var-file="staging.tfvars"
 terraform apply -var-file="staging.tfvars"
 terraform destroy -var-file="staging.tfvars"
 ```
+
+### Alembic commands
+```bash
+alembic init alembic
+alembic revision --autogenerate -m "[MEssage]"
+alembic upgrade head
+alembic history
+alembic downgrade -1
+```
