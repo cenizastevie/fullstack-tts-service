@@ -7,6 +7,10 @@ import requests
 from PIL import Image
 import numpy as np
 from io import BytesIO
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from app.models import Base, ImageMetadata
+from datetime import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
 
 from app.main import app
@@ -14,12 +18,16 @@ from app.config import settings
 
 client = TestClient(app)
 
+DATABASE_URL = "mysql+pymysql://admin:password@mysql:3306/medicaldb"
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 def test_image_service_health_check():
     response = client.get("/v1/image-service/health-check")
     assert response.status_code == 200
 
 def test_get_presigned_url():
-    response = client.post("/v1/image-service/presigned-url", json={"filename": "test_image.jpg"})
+    response = client.post("/v1/image-service/presigned-url", json={"filename": "test.jpeg"})
     assert response.status_code == 200
     json_response = response.json()
     assert "url" in json_response
@@ -41,12 +49,12 @@ def test_get_presigned_url_invalid_filename():
 
 def test_upload_file_to_presigned_url():
     # Step 1: Generate the presigned URL
-    response = client.post("/v1/image-service/presigned-url", json={"filename": "test_image.jpg"})
+    response = client.post("/v1/image-service/presigned-url", json={"filename": "test.jpeg"})
     assert response.status_code == 200
     presigned_url_data = response.json()
     print(presigned_url_data)
     # Step 2: Upload the file using the presigned URL
-    file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test_image.jpg')
+    file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test.jpeg')
     files = {'file': open(file_path, 'rb')}
     response = requests.post(presigned_url_data['url'], data=presigned_url_data['fields'], files=files)
     # Check if the file upload was successful
@@ -60,10 +68,10 @@ def test_upload_file_to_presigned_url():
     response = s3_client.list_objects_v2(Bucket=settings.image_bucket)
     assert 'Contents' in response
     filenames = [obj['Key'] for obj in response['Contents']]
-    assert "test_image.jpg" in filenames
+    assert "test.jpeg" in filenames
 
     # Step 4: Download the image from S3 and verify preprocessing
-    response = s3_client.get_object(Bucket=settings.image_bucket, Key="test_image.jpg")
+    response = s3_client.get_object(Bucket=settings.image_bucket, Key="test.jpeg")
     image_data = response['Body'].read()
     image = Image.open(BytesIO(image_data))
 
@@ -79,7 +87,7 @@ def test_upload_file_to_presigned_url():
     assert image_np.max() <= 255
 
 def test_upload_image_with_metadata():
-    file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test_image.jpg')
+    file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test.jpeg')
     with open(file_path, 'rb') as file:
         response = client.post(
             "/v1/image-service/upload",
@@ -100,9 +108,24 @@ def test_upload_image_with_metadata():
         "s3",
         endpoint_url=f"http://{os.getenv('LOCALSTACK_HOSTNAME')}:{os.getenv('LOCALSTACK_PORT')}"
     )
-    response = s3_client.head_object(Bucket=settings.image_bucket, Key="test_image.jpg")
+    response = s3_client.head_object(Bucket=settings.image_bucket, Key="test.jpeg")
     metadata = response["Metadata"]
     assert metadata["date"] == "2023-01-01"
     assert metadata["patient_id"] == "12345"
     assert metadata["source_id"] == "hospital_1"
     assert metadata["diagnosis"] == "normal"
+
+    # Verify the metadata is in the database
+    db = SessionLocal()
+    db_metadata = db.query(ImageMetadata).filter_by(filename="test.jpeg").first()
+    assert db_metadata is not None
+    assert db_metadata.date == datetime.strptime("2023-01-01", "%Y-%m-%d")
+    assert db_metadata.patient_id == "12345"
+    assert db_metadata.source_id == "hospital_1"
+    assert db_metadata.diagnosis == "normal"
+
+    # Clean up: Delete the file from S3 and the metadata from the database
+    s3_client.delete_object(Bucket=settings.image_bucket, Key="test.jpeg")
+    db.delete(db_metadata)
+    db.commit()
+    db.close()
