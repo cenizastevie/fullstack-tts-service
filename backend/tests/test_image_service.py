@@ -18,9 +18,19 @@ from app.config import settings
 
 client = TestClient(app)
 
-DATABASE_URL = "mysql+pymysql://admin:password@mysql:3306/medicaldb"
+# Use settings to get the DATABASE_URL
+DATABASE_URL = settings.database_url
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def bucket_exists(bucket_name):
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=f"http://{os.getenv('LOCALSTACK_HOSTNAME')}:{os.getenv('LOCALSTACK_PORT')}"
+    )
+    response = s3_client.list_buckets()
+    buckets = [bucket['Name'] for bucket in response['Buckets']]
+    return bucket_name in buckets
 
 def test_image_service_health_check():
     response = client.get("/v1/image-service/health-check")
@@ -129,3 +139,6 @@ def test_upload_image_with_metadata():
     db.delete(db_metadata)
     db.commit()
     db.close()
+
+def test_bucket_exists():
+    assert bucket_exists(settings.image_bucket)
