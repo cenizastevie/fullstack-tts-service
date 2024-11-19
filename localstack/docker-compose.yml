@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   localstack:
     image: localstack/localstack-pro
@@ -12,6 +14,24 @@ services:
     volumes:
       - "./localstack_data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    env_file:
+      - .env
+    networks:
+      - my_network
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    networks:
+      - my_network
+    env_file:
+      - .env
 
   fastapi:
     build:
@@ -23,15 +43,24 @@ services:
       - my_network
     depends_on:
       - localstack
+      - mysql
     environment:
-      - LOCALSTACK_HOSTNAME=localstack
-      - LOCALSTACK_PORT=4566
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - S3_ENDPOINT=http://localstack:4566 
+      - LOCALSTACK_HOSTNAME=${LOCALSTACK_HOSTNAME}
+      - LOCALSTACK_PORT=${LOCALSTACK_PORT}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ENVIRONMENT=dev
     volumes:
       - ../backend/app:/app
+    env_file:
+      - .env
 
   test:
     build:
@@ -41,15 +70,26 @@ services:
       - ../backend:/app
     command: ["pytest", "--disable-warnings"]
     environment:
-      - LOCALSTACK_HOSTNAME=localstack
-      - LOCALSTACK_PORT=4566
+      - LOCALSTACK_HOSTNAME=${LOCALSTACK_HOSTNAME}
+      - LOCALSTACK_PORT=${LOCALSTACK_PORT}
       - PYTHONPATH=/app
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=us-east-1
-      - S3_ENDPOINT=http://localstack:4566 
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+      - S3_ENDPOINT=${S3_ENDPOINT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - ENVIRONMENT=dev
     env_file:
-      - ../backend/app/.env
+      - .env
+    depends_on:
+      - localstack
+      - mysql
+    networks:
+      - my_network
 
 networks:
   my_network:

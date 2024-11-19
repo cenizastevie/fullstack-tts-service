@@ -15,13 +15,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
 
 from app.main import app
 from app.config import settings
-
+from app.database import get_db
 client = TestClient(app)
 
 # Use settings to get the DATABASE_URL
-DATABASE_URL = settings.database_url
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def bucket_exists(bucket_name):
     s3_client = boto3.client(
@@ -126,7 +123,7 @@ def test_upload_image_with_metadata():
     assert metadata["diagnosis"] == "normal"
 
     # Verify the metadata is in the database
-    db = SessionLocal()
+    db = next(get_db())
     db_metadata = db.query(ImageMetadata).filter_by(filename="test.jpeg").first()
     assert db_metadata is not None
     assert db_metadata.date == datetime.strptime("2023-01-01", "%Y-%m-%d")

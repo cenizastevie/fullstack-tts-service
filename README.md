@@ -73,3 +73,13 @@ alembic upgrade head
 alembic history
 alembic downgrade -1
 ```
+
+### Check localstack buckets
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls
+```
+
+### Bash not running container
+```bash
+docker-compose run test /bin/bash
+```

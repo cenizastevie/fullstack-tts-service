@@ -13,3 +13,5 @@ SQLAlchemy
 PyMySQL
 alembic
 cryptography
+psycopg2-binary
+python-multipart

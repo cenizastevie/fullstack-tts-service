@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 logger.info(f"Current working directory: {os.getcwd()}")
 
 from config import settings
-from routers.v1 import audio_service
+from routers.v1 import image_service
 
 app = FastAPI()
 
@@ -30,4 +30,4 @@ def read_root():
 def read_item(item_id: int, q: str = None):
     return {"item_id": item_id, "q": q}
 
-app.include_router(audio_service.router, prefix="/v1")
+app.include_router(image_service.router, prefix="/v1")
