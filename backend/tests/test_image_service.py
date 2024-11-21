@@ -12,12 +12,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 import pytest
 
+sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
+
 from app.main import app
 from app.config import settings
 from app.database import get_db
 from app.models import Base, ImageMetadata
-
-sys.path.append(os.path.join(os.path.dirname(__file__), '../app'))
 
 client = TestClient(app)
 
@@ -32,11 +32,9 @@ def s3_client():
 def db_session():
     engine = create_engine(settings.database_url)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
     yield db
     db.close()
-    Base.metadata.drop_all(bind=engine)
 
 def bucket_exists(s3_client, bucket_name):
     response = s3_client.list_buckets()
