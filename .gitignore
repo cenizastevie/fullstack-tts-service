@@ -47,3 +47,4 @@ terraform.rc
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 backend/app/alembic/script.py.mako
+localstack/mysql_data/*

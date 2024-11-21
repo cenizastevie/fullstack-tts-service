@@ -68,7 +68,7 @@ terraform destroy -var-file="staging.tfvars"
 ### Alembic commands
 ```bash
 alembic init alembic
-alembic revision --autogenerate -m "[MEssage]"
+alembic revision --autogenerate -m "[Message]"
 alembic upgrade head
 alembic history
 alembic downgrade -1
@@ -82,4 +82,6 @@ aws --endpoint-url=http://localhost:4566 s3 ls
 ### Bash not running container
 ```bash
 docker-compose run test /bin/bash
+docker-compose up --no-recreate
+docker-compose stop ##Dont use down
 ```
