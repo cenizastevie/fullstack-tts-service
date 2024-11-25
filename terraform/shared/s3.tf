@@ -27,3 +27,13 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "medical_images_en
     }
   }
 }
+
+# S3 Bucket
+resource "aws_s3_bucket" "preprocessed_images" {
+  bucket = "${var.bucket_name_prefix}-${var.environment}-preprocessed-images"
+
+  tags = {
+    Name        = "${var.bucket_name_prefix}-${var.environment}-preprocessed-images"
+    Environment = var.environment
+  }
+}

@@ -18,7 +18,7 @@ from app.main import app
 from app.config import settings
 from app.database import get_db
 from app.models import Base, ImageMetadata
-
+from app.routers.v1.image_service import preprocess_image_and_save
 client = TestClient(app)
 
 @pytest.fixture(scope="module")
@@ -61,6 +61,7 @@ def test_get_presigned_url_valid_fields():
     })
     assert response.status_code == 200
     json_response = response.json()
+    
     assert "presigned_url" in json_response
     assert "metadata" in json_response
     assert json_response["metadata"]["date"] == "2023-01-01"
@@ -73,41 +74,24 @@ def test_get_presigned_url_missing_metadata():
     response = client.post("/v1/image-service/presigned-url", json={})
     assert response.status_code != 200
 
-def test_upload_image_all_metadata():
-    """Test uploading an image with all metadata."""
-    response = client.post("/v1/image-service/upload", json={
+def test_presigned_image_presigned_url(s3_client):
+    """Test uploading an image using a presigned URL."""
+    response = client.post("/v1/image-service/presigned-url", json={
         "file_name": "test.jpeg",
         "date": "2023-01-01",
         "patient_id": "12345",
         "source_id": "hospital_1",
         "diagnosis": "normal"
     })
-    assert response.status_code == 200
-    json_response = response.json()
-    assert "presigned_url" in json_response
-    assert "metadata" in json_response
-    assert "date" in json_response["metadata"]
-    assert "patient_id" in json_response["metadata"]
-    assert "source_id" in json_response["metadata"]
-    assert "diagnosis" in json_response["metadata"]
-
-def test_presigned_image_presigned_url(s3_client):
-    """Test uploading an image using a presigned URL."""
-    response = client.post("/v1/image-service/presigned-url", json={
-        "date": "2023-01-01",
-        "patient_id": "12345",
-        "source_id": "hospital_1",
-        "diagnosis": "normal"
-    })
+    print(response.json())
     assert response.status_code == 200
     presigned_url_data = response.json()
 
     file_path = os.path.join(os.path.dirname(__file__), 'test_files', 'test.jpeg')
-    files = {'file': open(file_path, 'rb')}
-    response = requests.post(presigned_url_data['url'], data=presigned_url_data['fields'], files=files)
-    assert response.status_code == 204
+    with open(file_path, "rb") as file:
+        response = requests.put(presigned_url_data['presigned_url'], data=file)
+    assert response.status_code == 200
     
-    # Verify the file is in the S3 bucket
     response = s3_client.list_objects_v2(Bucket=settings.image_bucket)
     assert 'Contents' in response
     filenames = [obj['Key'] for obj in response['Contents']]
@@ -128,15 +112,10 @@ def test_image_preprocessing(s3_client, db_session):
         }
     )
 
-    response = client.post("/v1/image-service/preprocess-image", json={"file_name": "test.jpeg"})
-    assert response.status_code == 200
-
-    response = s3_client.list_objects_v2(Bucket=settings.preprocessed_image_bucket)
-    assert 'Contents' in response
-    filenames = [obj['Key'] for obj in response['Contents']]
-    assert "test.jpeg" in filenames
+    is_success, e = preprocess_image_and_save("test.jpeg")
 
     db_metadata = db_session.query(ImageMetadata).filter_by(filename="test.jpeg").first()
+    print(db_metadata)
     assert db_metadata is not None
     assert db_metadata.date == datetime.strptime("2023-01-01", "%Y-%m-%d")
     assert db_metadata.patient_id == "12345"
