@@ -68,10 +68,9 @@ services:
   test:
     build:
       context: ../backend/app
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.test
     volumes:
       - ../backend:/app
-    command: ["pytest", "--disable-warnings"]
     environment:
       - LOCALSTACK_HOSTNAME=${LOCALSTACK_HOSTNAME}
       - LOCALSTACK_PORT=${LOCALSTACK_PORT}
@@ -88,6 +87,8 @@ services:
       - ENVIRONMENT=dev
     env_file:
       - .env
+    ports:
+      - "5678:5678"
     depends_on:
       - localstack
       - mysql

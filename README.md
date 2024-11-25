@@ -85,3 +85,9 @@ docker-compose run test /bin/bash
 docker-compose up --no-recreate
 docker-compose stop ##Dont use down
 ```
+
+### Running debug mode
+```
+docker-compose run -p 5678:5678 test /bin/bash
+python3 -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m pytest
+```

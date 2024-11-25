@@ -1,0 +1,37 @@
+# Use AWS Amazon Linux 2 as the base image
+FROM amazonlinux:2
+
+# Install Python 3.8 and other required packages
+RUN yum update -y && \
+    yum install -y \
+    python3 \
+    python3-pip \
+    tar \
+    gzip \
+    make \
+    && yum clean all
+
+# Set the working directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+# Install boto3 and debugpy for AWS compatibility and debugging
+RUN pip3 install boto3 debugpy
+
+RUN pip install debugpy
+
+# Copy the FastAPI app code into the container
+COPY . .
+
+# Set the PYTHONPATH environment variable
+ENV PYTHONPATH=/app
+
+# Expose the debugpy port for debugging
+EXPOSE 5678
+
+# Command to run tests with debugpy
+CMD ["python3", "-m", "pytest"]
