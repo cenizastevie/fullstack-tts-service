@@ -25,4 +25,7 @@ class Settings(BaseSettings):
     def database_url(self):
         return f"mysql+pymysql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
+    @property
+    def preprocessed_image_bucket(self):
+        return f"tts-service-{self.environment}-preprocessed-images"
 settings = Settings()

@@ -114,25 +114,30 @@ def test_image_preprocessing(s3_client, db_session):
 
     is_success, e = preprocess_image_and_save("test.jpeg")
 
-    db_metadata = db_session.query(ImageMetadata).filter_by(filename="test.jpeg").first()
-    print(db_metadata)
-    assert db_metadata is not None
-    assert db_metadata.date == datetime.strptime("2023-01-01", "%Y-%m-%d")
-    assert db_metadata.patient_id == "12345"
-    assert db_metadata.source_id == "hospital_1"
-    assert db_metadata.diagnosis == "normal"
+    db_metadata = db_session.query(ImageMetadata).filter_by(file_name="test.jpeg").first()
+    try:
+        assert db_metadata is not None
+        assert db_metadata.date == datetime.strptime("2023-01-01", "%Y-%m-%d").date()
+        assert db_metadata.patient_id == "12345"
+        assert db_metadata.source_id == "hospital_1"
+        assert db_metadata.diagnosis == "normal"
+        processed_key = f"processed_test.jpeg"
+        response = s3_client.get_object(Bucket=settings.preprocessed_image_bucket, Key=processed_key)
+        image_data = response['Body'].read()
+        image = Image.open(BytesIO(image_data))
 
-    response = s3_client.get_object(Bucket=settings.preprocessed_image_bucket, Key="test.jpeg")
-    image_data = response['Body'].read()
-    image = Image.open(BytesIO(image_data))
+        # Verify the image is grayscale
+        assert image.mode == "L"
 
-    # Verify the image is grayscale
-    assert image.mode == "L"
+        # Verify the image dimensions
+        assert image.size == (256, 256)
 
-    # Verify the image dimensions
-    assert image.size == (256, 256)
-
-    # Verify the pixel value range
-    image_np = np.array(image)
-    assert image_np.min() >= 0
-    assert image_np.max() <= 255
+        # Verify the pixel value range
+        image_np = np.array(image)
+        assert image_np.min() >= 0
+        assert image_np.max() <= 255
+    finally:
+        # Clean up the created database entry
+        if db_metadata:
+            db_session.delete(db_metadata)
+            db_session.commit()
