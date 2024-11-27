@@ -30,16 +30,16 @@ jobs:
 
     - name: Initialize Terraform
       working-directory: terraform/staging
-      run: terraform init -var-file="staging.tfvars"
+      run: terraform init 
 
     - name: Plan Terraform
       working-directory: terraform/staging
-      run: terraform plan -var-file="staging.tfvars"
+      run: terraform plan 
 
     - name: Apply Terraform
       if: github.event_name == 'push'
       working-directory: terraform/staging
-      run: terraform apply -var-file="staging.tfvars" -auto-approve
+      run: terraform apply  -auto-approve
 
   destroy:
     runs-on: ubuntu-latest
@@ -61,9 +61,9 @@ jobs:
 
     - name: Initialize Terraform
       working-directory: terraform/staging
-      run: terraform init -var-file="staging.tfvars"
+      run: terraform init 
 
     - name: Destroy Terraform
       if: github.event_name == 'workflow_dispatch'
       working-directory: terraform/staging
-      run: terraform destroy -var-file="staging.tfvars" -auto-approve
+      run: terraform destroy  -auto-approve
