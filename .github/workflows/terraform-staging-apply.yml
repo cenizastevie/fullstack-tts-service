@@ -40,63 +40,32 @@ jobs:
       run: terraform apply -auto-approve
 
     - name: Capture ECR Repository URL
-      id: ecr_output  # This is the step ID, which we will reference later
+      id: ecr_output
       working-directory: terraform/staging
       run: |
-        # Capture the ECR repository URL from terraform output
-        ecr_repository_url=$(terraform output -raw ecr_repository_url 2>/dev/null)
-        
-        # Debugging output
-        echo "Captured ECR repository URL: $ecr_repository_url"
-        
-        # Check if the URL is empty or invalid
-        if [ -z "$ecr_repository_url" ]; then
-          echo "Error: ECR repository URL is empty or invalid."
-          exit 1
-        fi
-    
-        # Output the repository URL to GitHub Actions output file (new method)
-        echo "ECR_REPOSITORY_URL=$ecr_repository_url" >> $GITHUB_OUTPUT
-        
-        # Extract the registry and repository parts from the full URL
-        ECR_REGISTRY=$(echo $ecr_repository_url | cut -d'/' -f1)
-        ECR_REPOSITORY=$(echo $ecr_repository_url | cut -d'/' -f2-)
-        
-        # Set the extracted values as GitHub output
-        echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_OUTPUT
-        echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> $GITHUB_OUTPUT
-    
+        ecr_repository_url=$(terraform output -raw ecr_repository_url)
+        echo "ecr_repository_url=$ecr_repository_url" >> $GITHUB_OUTPUT
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-    
+
     - name: Log in to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-    
+
     - name: Build, tag, and push Docker image
       env:
-        ECR_REGISTRY: ${{ steps.ecr_output.outputs.ECR_REGISTRY }}
-        ECR_REPOSITORY: ${{ steps.ecr_output.outputs.ECR_REPOSITORY }}
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ steps.ecr_output.outputs.ecr_repository_url }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Echo values for debugging purposes
-        echo "Building Docker image with the following:"
-        echo "ECR_REGISTRY: $ECR_REGISTRY"
-        echo "ECR_REPOSITORY: $ECR_REPOSITORY"
-        echo "IMAGE_TAG: $IMAGE_TAG"
-        
-        # Build and push Docker image
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f backend/app/Dockerfile backend/app
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-    
+        docker build -t $ECR_REPOSITORY:$IMAGE_TAG -f backend/app/Dockerfile backend/app
+        docker push $ECR_REPOSITORY:$IMAGE_TAG
+
     - name: Deploy to ECS
       run: |
-        # Update ECS service with the new image
-        ecs_cluster="${{ steps.ecr_output.outputs.ECR_REGISTRY }}-${{ steps.ecr_output.outputs.ECR_REPOSITORY }}-cluster"
-        ecs_service="${{ steps.ecr_output.outputs.ECR_REGISTRY }}-${{ steps.ecr_output.outputs.ECR_REPOSITORY }}-service"
-        
-        aws ecs update-service --cluster $ecs_cluster --service $ecs_service --force-new-deployment
+        aws ecs update-service --cluster your-cluster-name --service your-service-name --force-new-deployment
