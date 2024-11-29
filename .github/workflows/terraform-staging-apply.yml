@@ -47,9 +47,9 @@ jobs:
       id: store_ecr_url
       working-directory: terraform/staging
       run: |
-        ECR_REPO_URL=$(terraform output -raw ecr_repository_url 2>/dev/null || echo "")
+        ECR_REPO_URL=$(terraform output ecr_repository_url 2>/dev/null || echo "")
         echo "ECR_REPO_URL=$ECR_REPO_URL" >> $GITHUB_OUTPUT
-        
+
     - name: Capture ECR Repository URL
       id: ecr_output
       working-directory: terraform/staging
