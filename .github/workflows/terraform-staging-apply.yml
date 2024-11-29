@@ -43,13 +43,20 @@ jobs:
       id: ecr_output
       working-directory: terraform/staging
       run: |
+        # Capture the ECR repository URL from terraform output
         ecr_repository_url=$(terraform output -raw ecr_repository_url 2>/dev/null)
+        
+        # Check if the URL is empty or invalid
         if [ -z "$ecr_repository_url" ]; then
           echo "Error: ECR repository URL is empty or invalid."
           exit 1
         fi
+        
+        # Set the ECR repository URL to a GitHub environment variable
         echo "ECR_REPOSITORY_URL=$ecr_repository_url" >> $GITHUB_ENV
-
+        echo "ECR_REGISTRY=$(echo $ecr_repository_url | cut -d'/' -f1)" >> $GITHUB_ENV
+        echo "ECR_REPOSITORY=$(echo $ecr_repository_url | cut -d'/' -f2-)" >> $GITHUB_ENV
+    
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -63,13 +70,19 @@ jobs:
 
     - name: Build, tag, and push Docker image
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ env.ECR_REPOSITORY_URL }}
+        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
+        # Echo values for debugging purposes
+        echo "Building Docker image with the following:"
+        echo "ECR_REGISTRY: $ECR_REGISTRY"
+        echo "ECR_REPOSITORY: $ECR_REPOSITORY"
+        echo "IMAGE_TAG: $IMAGE_TAG"
+        
+        # Build and push Docker image
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f backend/app/Dockerfile backend/app
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-
     - name: Deploy to ECS
       run: |
         ecs_cluster="${var.bucket_name_prefix}-${var.environment}-cluster"
