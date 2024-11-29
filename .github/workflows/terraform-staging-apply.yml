@@ -40,7 +40,7 @@ jobs:
       run: terraform apply -auto-approve
 
     - name: Capture ECR Repository URL
-      id: ecr_output
+      id: ecr_output  # This is the step ID, which we will reference later
       working-directory: terraform/staging
       run: |
         # Capture the ECR repository URL from terraform output
@@ -55,32 +55,32 @@ jobs:
           exit 1
         fi
     
-        # Output the repository URL to a GitHub environment variable
-        echo "ECR_REPOSITORY_URL=$ecr_repository_url" >> $GITHUB_ENV
-    
+        # Output the repository URL to GitHub Actions output file (new method)
+        echo "ECR_REPOSITORY_URL=$ecr_repository_url" >> $GITHUB_OUTPUT
+        
         # Extract the registry and repository parts from the full URL
         ECR_REGISTRY=$(echo $ecr_repository_url | cut -d'/' -f1)
         ECR_REPOSITORY=$(echo $ecr_repository_url | cut -d'/' -f2-)
+        
+        # Set the extracted values as GitHub output
+        echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_OUTPUT
+        echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> $GITHUB_OUTPUT
     
-        # Output the extracted registry and repository
-        echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
-        echo "ECR_REPOSITORY=$ECR_REPOSITORY" >> $GITHUB_ENV
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
-
+    
     - name: Log in to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
-
+    
     - name: Build, tag, and push Docker image
       env:
-        ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
-        ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+        ECR_REGISTRY: ${{ steps.ecr_output.outputs.ECR_REGISTRY }}
+        ECR_REPOSITORY: ${{ steps.ecr_output.outputs.ECR_REPOSITORY }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Echo values for debugging purposes
@@ -92,8 +92,11 @@ jobs:
         # Build and push Docker image
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f backend/app/Dockerfile backend/app
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    
     - name: Deploy to ECS
       run: |
-        ecs_cluster="${var.bucket_name_prefix}-${var.environment}-cluster"
-        ecs_service="${var.bucket_name_prefix}-${var.environment}-service"
+        # Update ECS service with the new image
+        ecs_cluster="${{ steps.ecr_output.outputs.ECR_REGISTRY }}-${{ steps.ecr_output.outputs.ECR_REPOSITORY }}-cluster"
+        ecs_service="${{ steps.ecr_output.outputs.ECR_REGISTRY }}-${{ steps.ecr_output.outputs.ECR_REPOSITORY }}-service"
+        
         aws ecs update-service --cluster $ecs_cluster --service $ecs_service --force-new-deployment
