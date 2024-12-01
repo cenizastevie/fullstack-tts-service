@@ -11,7 +11,7 @@ resource "aws_ecs_task_definition" "fastapi" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions    = jsonencode([
     {
-      name      = "fastapi-container"
+      name      = "${var.bucket_name_prefix}-${var.environment}-container"
       image     = "${aws_ecr_repository.fastapi.repository_url}:latest"
       essential = true
       portMappings = [
